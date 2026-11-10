@@ -39,8 +39,9 @@ restent sur l'appareil. Pour le temps réel entre téléphones :
 3. *Realtime Database* → *Règles* : collez le contenu de
    [`../firebase/database.rules.json`](../firebase/database.rules.json), puis publiez.
 4. *Paramètres du projet* → *Ajouter une app* → **iOS**, identifiant `app.ensemblo.ios`.
-   Téléchargez `GoogleService-Info.plist` et posez‑le dans `ios/` (il n'est pas versionné).
-5. `xcodegen generate` à nouveau : le fichier est ajouté à l'app.
+   Téléchargez `GoogleService-Info.plist` et posez‑le dans `ios/` (il n'est pas versionné) :
+   une phase de script le copie dans l'app à chaque compilation.
+5. Recompilez.
 
 Pour que le QR‑code ouvre aussi une page web chez les amis sans l'app, mettez l'adresse de
 cette page dans `EnsembloWebURL` (`project.yml`) : les liens deviennent
