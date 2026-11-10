@@ -1,0 +1,61 @@
+[package]
+name = "ensemblo-site"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+description = "Le site de présentation d'Ensemblo (« On fait quoi ce soir ? »), écrit en Rust avec Paquets."
+
+# Une crate, deux cibles : le serveur (src/main.rs) et, compilés en WebAssembly, les
+# îlots et les animations du navigateur (src/lib.rs).
+[lib]
+name = "ensemblo_site"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "ensemblo-site"
+path = "src/main.rs"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+paquets = { git = "https://github.com/maxlestage/Paquets" }
+tokio = { version = "1.54", features = ["macros", "rt-multi-thread"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+paquets = { git = "https://github.com/maxlestage/Paquets", default-features = false, features = ["client"] }
+wasm-bindgen = "=0.2.130"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+  "AddEventListenerOptions",
+  "CssStyleDeclaration",
+  "Document",
+  "DomRect",
+  "DomTokenList",
+  "Element",
+  "EventTarget",
+  "HtmlElement",
+  "IntersectionObserver",
+  "IntersectionObserverEntry",
+  "IntersectionObserverInit",
+  "MediaQueryList",
+  "NodeList",
+  "PointerEvent",
+  "MouseEvent",
+  "Navigator",
+  "Window",
+  "console",
+] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+# Le bundle du navigateur : le plus petit possible.
+[profile.wasm-release]
+inherits = "release"
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+# wasm-bindgen lit la section `target_features`, que `strip` retirerait.
+strip = false
