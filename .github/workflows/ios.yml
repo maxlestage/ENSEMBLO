@@ -1,0 +1,35 @@
+# Compile l'app iOS avec Xcode 27 (SDK iOS 27, Swift 6.4) quand ios/ change, et lance
+# les tests du cœur sur macOS.
+
+name: iOS
+
+on:
+  push:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: App iOS (Xcode 27)
+    runs-on: xcode-27
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v7
+      - name: XcodeGen
+        run: |
+          brew install xcodegen
+          xcodegen --version
+          xcodegen generate
+      - name: Tests du cœur
+        run: swift test --package-path EnsembloCore
+      - name: Compilation (simulateur)
+        run: |
+          set -o pipefail
+          xcodebuild -project Ensemblo.xcodeproj -scheme Ensemblo \
+            -destination 'generic/platform=iOS Simulator' \
+            -skipPackagePluginValidation -skipMacroValidation \
+            CODE_SIGNING_ALLOWED=NO build

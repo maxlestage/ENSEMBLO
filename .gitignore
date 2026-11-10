@@ -1,0 +1,14 @@
+# Site (Rust)
+/site/target
+/site/pkg
+*.db
+
+# iOS : le projet est généré par XcodeGen depuis ios/project.yml
+/ios/*.xcodeproj
+/ios/Ensemblo/Info.plist
+/ios/GoogleService-Info.plist
+/ios/EnsembloCore/.build
+/ios/EnsembloCore/.swiftpm
+xcuserdata/
+DerivedData/
+.DS_Store

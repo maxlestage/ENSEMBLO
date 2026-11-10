@@ -1,0 +1,4 @@
+# Heroku construit l'image Docker depuis le Dockerfile (pile « container »).
+build:
+  docker:
+    web: Dockerfile

@@ -1,0 +1,92 @@
+# Le projet Xcode d'Ensemblo, généré par XcodeGen (2.46+) :
+#
+#   brew install xcodegen
+#   cd ios && xcodegen generate && open Ensemblo.xcodeproj
+#
+# Le fichier .xcodeproj n'est pas versionné : ce fichier est la source.
+name: Ensemblo
+
+options:
+  bundleIdPrefix: app.ensemblo
+  deploymentTarget:
+    iOS: "26.0"
+  xcodeVersion: "27.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Votre équipe Apple, pour installer l'app sur un iPhone.
+    DEVELOPMENT_TEAM: ""
+
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "13.1.1"
+  EnsembloCore:
+    path: EnsembloCore
+
+targets:
+  Ensemblo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Ensemblo
+        excludes:
+          - "**/.DS_Store"
+      # Votre configuration Firebase (non versionnée) : sans elle, l'app tourne en local.
+      - path: GoogleService-Info.plist
+        optional: true
+        buildPhase: resources
+    dependencies:
+      - package: EnsembloCore
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseDatabase
+    info:
+      path: Ensemblo/Info.plist
+      properties:
+        CFBundleDisplayName: Ensemblo
+        CFBundleDevelopmentRegion: fr
+        LSApplicationCategoryType: public.app-category.lifestyle
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen:
+          UIColorName: AccentColor
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSCameraUsageDescription: Ensemblo utilise l'appareil photo pour scanner le QR‑code d'une session.
+        CFBundleURLTypes:
+          - CFBundleURLName: app.ensemblo.session
+            CFBundleURLSchemes: [ensemblo]
+        # L'adresse web des liens de session (ex. https://exemple.fr) ; vide : ensemblo://s/CODE.
+        EnsembloWebURL: ""
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.ensemblo.ios
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+
+schemes:
+  Ensemblo:
+    build:
+      targets:
+        Ensemblo: all
+    run:
+      config: Debug
+    archive:
+      config: Release
