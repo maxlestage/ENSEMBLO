@@ -1,0 +1,6 @@
+.git
+ios
+firebase
+site/target
+site/pkg
+*.db
