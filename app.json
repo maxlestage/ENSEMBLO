@@ -1,0 +1,7 @@
+{
+  "name": "Ensemblo",
+  "description": "Le site de présentation d'Ensemblo, « On fait quoi ce soir ? », écrit en Rust avec Paquets.",
+  "keywords": ["rust", "paquets", "webassembly", "3d"],
+  "stack": "container",
+  "success_url": "/"
+}
