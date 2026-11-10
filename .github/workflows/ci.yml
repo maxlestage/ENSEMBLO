@@ -1,0 +1,104 @@
+# Teste chaque push :
+#
+# - site : format, clippy (serveur et navigateur), tests, bundle WebAssembly ;
+# - cœur iOS : les tests Swift du paquet EnsembloCore, sous Linux ;
+# - fusion : quand tout est vert, la branche est fusionnée dans master (sauf master et
+#   les branches wip/...), puis master est déployé sur Heroku (heroku.yml).
+#
+# L'app iOS elle-même est compilée par ios.yml, quand ios/ change.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  # Paquets et ses paquets sont dans des dépôts privés : Cargo les récupère avec git, qui
+  # demande les identifiants de GitHub à un assistant lisant le secret REPOS_TOKEN (un
+  # jeton qui peut lire ces dépôts). Le jeton n'apparaît dans aucune URL ; sans le
+  # secret, rien ne change.
+  REPOS_TOKEN: ${{ secrets.REPOS_TOKEN }}
+  CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+  GIT_CONFIG_COUNT: ${{ secrets.REPOS_TOKEN != '' && 1 || 0 }}
+  GIT_CONFIG_KEY_0: credential.https://github.com.helper
+  GIT_CONFIG_VALUE_0: '!f() { test "$1" = get && echo username=x-access-token && echo "password=$REPOS_TOKEN"; }; f'
+  CARGO_TERM_COLOR: always
+
+jobs:
+  site:
+    name: Site (Rust, Paquets)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2.9.3
+        with:
+          workspaces: site
+      - uses: taiki-e/install-action@v2.90.3
+        with:
+          tool: wasm-bindgen@0.2.130
+      - run: cargo fmt --check
+      - name: Clippy (serveur)
+        run: cargo clippy --all-targets -- -D warnings
+      - name: Clippy (navigateur, wasm32)
+        run: cargo clippy --lib --target wasm32-unknown-unknown -- -D warnings
+      - run: cargo test
+      - name: Bundle du navigateur
+        run: |
+          cargo build --lib --target wasm32-unknown-unknown --profile wasm-release
+          wasm-bindgen --target web --no-typescript --remove-name-section --remove-producers-section \
+            --out-dir pkg target/wasm32-unknown-unknown/wasm-release/ensemblo_site.wasm
+          ls -l pkg
+
+  core:
+    name: Cœur iOS (Swift, Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.4
+    steps:
+      - uses: actions/checkout@v7
+      - run: swift test --package-path ios/EnsembloCore
+
+  merge:
+    name: Fusion dans master
+    needs: [site, core]
+    if: >-
+      github.event_name == 'push' && github.ref_name != 'master' &&
+      !startsWith(github.ref_name, 'wip/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    concurrency:
+      group: merge-into-master
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: master
+          fetch-depth: 0
+      - name: Fusion
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git merge-base --is-ancestor "$SHA" HEAD; then
+            echo "Déjà dans master."
+            exit 0
+          fi
+          git merge --no-ff --no-edit "$SHA" -m "Fusion automatique dans master"
+          git push origin HEAD:master
+      # Un push fait par un workflow n'en démarre aucun autre : on lance le déploiement.
+      - name: Déployer master
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run heroku.yml --ref master --repo "$GITHUB_REPOSITORY"
