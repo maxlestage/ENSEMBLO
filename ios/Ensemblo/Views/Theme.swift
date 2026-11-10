@@ -11,11 +11,9 @@ enum Theme {
     static let no = Color(red: 1, green: 107 / 255, blue: 157 / 255)
     static let gold = Color(red: 1, green: 200 / 255, blue: 61 / 255)
 
-    static let gradient = LinearGradient(
-        colors: [coral, violet, mint],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    static var gradient: LinearGradient {
+        LinearGradient(colors: [coral, violet, mint], startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
 
     static var background: some View {
         ZStack {
