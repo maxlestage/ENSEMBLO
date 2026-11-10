@@ -39,10 +39,18 @@ targets:
       - path: Ensemblo
         excludes:
           - "**/.DS_Store"
-      # Votre configuration Firebase (non versionnée) : sans elle, l'app tourne en local.
-      - path: GoogleService-Info.plist
-        optional: true
-        buildPhase: resources
+    # Votre configuration Firebase (ios/GoogleService-Info.plist, non versionnée) est
+    # copiée dans l'app si elle existe ; sans elle, l'app tourne en local.
+    postBuildScripts:
+      - name: Configuration Firebase
+        basedOnDependencyAnalysis: false
+        script: |
+          config="$SRCROOT/GoogleService-Info.plist"
+          if [ -f "$config" ]; then
+            cp "$config" "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/GoogleService-Info.plist"
+          else
+            echo "note: pas de GoogleService-Info.plist, l'app tourne en mode local"
+          fi
     dependencies:
       - package: EnsembloCore
       - package: Firebase
@@ -80,6 +88,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
+        # Le script ci-dessus lit un fichier facultatif, qu'il ne peut pas déclarer.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
 
 schemes:
   Ensemblo:
