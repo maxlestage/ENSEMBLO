@@ -2,8 +2,9 @@
 #
 # - site : format, clippy (serveur et navigateur), tests, bundle WebAssembly ;
 # - cœur iOS : les tests Swift du paquet EnsembloCore, sous Linux ;
-# - fusion : quand tout est vert, la branche est fusionnée dans master (sauf master et
-#   les branches wip/...), puis master est déployé sur Heroku (heroku.yml).
+# - fusion : quand tout est vert, la branche est fusionnée automatiquement dans master
+#   (sauf master et les branches wip/...), puis master est publié sur GitHub Pages
+#   (pages.yml) et déployé sur Heroku (heroku.yml).
 #
 # L'app iOS elle-même est compilée par ios.yml, quand ios/ change.
 
@@ -97,8 +98,10 @@ jobs:
           fi
           git merge --no-ff --no-edit "$SHA" -m "Fusion automatique dans master"
           git push origin HEAD:master
-      # Un push fait par un workflow n'en démarre aucun autre : on lance le déploiement.
-      - name: Déployer master
+      # Un push fait par un workflow n'en démarre aucun autre : on lance les déploiements.
+      - name: Publier master
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run heroku.yml --ref master --repo "$GITHUB_REPOSITORY"
+        run: |
+          gh workflow run pages.yml --ref master --repo "$GITHUB_REPOSITORY"
+          gh workflow run heroku.yml --ref master --repo "$GITHUB_REPOSITORY"

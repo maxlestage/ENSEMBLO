@@ -70,7 +70,6 @@ struct VoteView: View {
             .offset(y: CGFloat(depth) * 14)
             .offset(x: flew ? (flying!.yes ? 600 : -600) : offset.width, y: flew ? -60 : offset.height * 0.3)
             .rotationEffect(.degrees(flew ? (flying!.yes ? 24 : -24) : Double(offset.width / 18)))
-            .rotation3DEffect(.degrees(Double(offset.width / 10)), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
             .allowsHitTesting(isTop)
             .gesture(
                 DragGesture()
