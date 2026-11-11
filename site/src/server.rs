@@ -7,7 +7,7 @@ use paquets::prelude::*;
 
 use crate::content::{FAQ, FEATURES, IDEAS, MARQUEE, ROTATING, STEPS};
 use crate::icons::{icon, logo};
-use crate::islands::{ballot3d, flap, hero3d, swipe};
+use crate::islands::{self, flap, swipe};
 
 pub const NAME: &str = "Ensemblo";
 pub const TAGLINE: &str = "On fait quoi ce soir ?";
@@ -43,8 +43,19 @@ fn css_href() -> String {
     .clone()
 }
 
-/// L'adresse publique du site : `SITE_URL`, ou celle de la requête.
+/// L'adresse publique imposée par l'export statique (`export::export`).
+static SITE_URL: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+/// Fixe l'adresse publique des URL canoniques et Open Graph (une fois).
+pub fn set_site_url(url: &str) {
+    let _ = SITE_URL.set(url.trim().trim_end_matches('/').to_owned());
+}
+
+/// L'adresse publique du site : celle de l'export, `SITE_URL`, ou celle de la requête.
 fn origin(req: &Request) -> String {
+    if let Some(url) = SITE_URL.get() {
+        return url.clone();
+    }
     if let Ok(url) = std::env::var("SITE_URL") {
         let url = url.trim().trim_end_matches('/');
         if !url.is_empty() {
@@ -103,7 +114,7 @@ fn page(title: &str, description: &str, origin: &str, path: &str) -> Page {
                     .to_string(),
                 ),
         )
-        .head(r##"<link rel="icon" href="/favicon.svg" type="image/svg+xml"/><meta name="color-scheme" content="dark"/><meta name="theme-color" content="#0d0a1f"/>"##)
+        .head(r##"<link rel="icon" href="/favicon.svg" type="image/svg+xml"/><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png"/><meta name="color-scheme" content="dark"/><meta name="theme-color" content="#0d0a1f"/>"##)
         .stylesheet(FONTS)
         .stylesheet(css_href())
         .view_transitions()
@@ -255,11 +266,11 @@ fn hero() -> Element {
                                 .child(span().class("float-card__title").text(idea.kind))
                         })),
                 )
-                .child(island("hero3d", "", hero3d))
+                .child(island("hero", "", islands::hero))
                 .child(
                     p().class("hero__hint")
                         .child(icon("swipe"))
-                        .text("Touchez le plateau pour voter, glissez pour tourner"),
+                        .text("Touchez la scène pour lâcher un vote"),
                 ),
         )
 }
@@ -418,7 +429,7 @@ fn demo() -> Element {
         )
 }
 
-/// Un téléphone en CSS 3D, avec une mini-pile de cartes à l'écran.
+/// Un téléphone en CSS, avec une mini-pile de cartes à l'écran.
 fn mini_phone(i: usize, name: &str) -> Element {
     div()
         .class("phone")
@@ -485,18 +496,18 @@ fn ballot() -> Element {
         .id("resultat")
         .child(heading(
             "Le résultat",
-            "Le verdict tombe, en 3D",
+            "Le verdict tombe, en direct",
             "Chaque oui est une bille qui tombe dans l'urne de son idée. La plus remplie gagne. En cas d'égalité, un tirage au sort départage les ex æquo, avec la même graine sur chaque téléphone.",
         ))
         .child(
             div()
                 .class("ballot-stage")
                 .attr("data-reveal", "")
-                .child(island("ballot3d", "", ballot3d)),
+                .child(island("ballot", "", islands::ballot)),
         )
 }
 
-/// L'iPhone en CSS 3D, avec l'écran de vote de l'app.
+/// L'iPhone en CSS, avec l'écran de vote de l'app.
 fn iphone() -> Element {
     let idea = IDEAS[1];
     div()
@@ -504,47 +515,38 @@ fn iphone() -> Element {
         .attr("data-reveal", "")
         .attr("aria-hidden", "true")
         .child(
-            div()
-                .class("iphone")
-                .child(div().class("iphone__side iphone__side--right"))
-                .child(div().class("iphone__side iphone__side--left"))
-                .child(div().class("iphone__back"))
-                .child(
-                    div()
-                        .class("iphone__front")
-                        .child(div().class("iphone__island"))
-                        .child(
-                            div()
-                                .class("app")
-                                .child(
-                                    div()
-                                        .class("app__top")
-                                        .child(span().class("app__code").text("SOIREE"))
-                                        .child(span().class("app__people").text("4 ✓")),
-                                )
-                                .child(p().class("app__title").text("On fait quoi ce soir ?"))
-                                .child(
-                                    div()
-                                        .class("app__card")
-                                        .style(format!("--hue:{}", idea.hue))
-                                        .child(span().class("app__emoji").text(idea.emoji))
-                                        .child(strong().text(idea.title))
-                                        .child(small().text(idea.detail)),
-                                )
-                                .child(
-                                    div()
-                                        .class("app__buttons")
-                                        .child(
-                                            span().class("app__btn app__btn--no").child(icon("x")),
-                                        )
-                                        .child(
-                                            span()
-                                                .class("app__btn app__btn--yes")
-                                                .child(icon("heart")),
-                                        ),
-                                ),
-                        ),
-                ),
+            div().class("iphone").child(
+                div()
+                    .class("iphone__front")
+                    .child(div().class("iphone__island"))
+                    .child(
+                        div()
+                            .class("app")
+                            .child(
+                                div()
+                                    .class("app__top")
+                                    .child(span().class("app__code").text("SOIREE"))
+                                    .child(span().class("app__people").text("4 ✓")),
+                            )
+                            .child(p().class("app__title").text("On fait quoi ce soir ?"))
+                            .child(
+                                div()
+                                    .class("app__card")
+                                    .style(format!("--hue:{}", idea.hue))
+                                    .child(span().class("app__emoji").text(idea.emoji))
+                                    .child(strong().text(idea.title))
+                                    .child(small().text(idea.detail)),
+                            )
+                            .child(
+                                div()
+                                    .class("app__buttons")
+                                    .child(span().class("app__btn app__btn--no").child(icon("x")))
+                                    .child(
+                                        span().class("app__btn app__btn--yes").child(icon("heart")),
+                                    ),
+                            ),
+                    ),
+            ),
         )
 }
 
@@ -622,7 +624,7 @@ fn tech() -> Element {
                     ul().class("stack")
                         .attr("data-reveal", "")
                         .style("--d:120ms")
-                        .child(chip("Rust + Paquets", "ce site, ses îlots WebAssembly et sa 3D"))
+                        .child(chip("Rust + Paquets", "ce site, ses îlots WebAssembly et ses animations 2D"))
                         .child(chip("Swift 6 + SwiftUI", "l'app iPhone, iOS 26 et plus"))
                         .child(chip("Firebase", "Realtime Database, connexion anonyme"))
                         .child(chip("PWA", "installable, utilisable hors ligne")),
@@ -787,7 +789,10 @@ pub fn app() -> App {
             .theme_color("#0d0a1f")
             .background_color("#0d0a1f")
             .lang("fr")
-            .categories(["lifestyle", "social", "entertainment"]),
+            .categories(["lifestyle", "social", "entertainment"])
+            .icon("/icons/icon-192.png", "192x192", "image/png")
+            .icon("/icons/icon-512.png", "512x512", "image/png")
+            .maskable_icon("/icons/icon-maskable-512.png", "512x512", "image/png"),
     );
     app.fallback(not_found);
     app
