@@ -52,7 +52,7 @@ struct HomeView: View {
                         .frame(width: 66, height: 86)
                         .background(Theme.card(for: emoji), in: .rect(cornerRadius: 16))
                         .rotationEffect(.degrees(Double(index - 1) * 10))
-                        .rotation3DEffect(.degrees(floating ? 14 : -14), axis: (x: 0, y: 1, z: 0))
+                        .rotationEffect(.degrees(floating ? 4 : -4))
                         .offset(y: floating ? -6 : 6)
                         .animation(
                             .easeInOut(duration: 2.4).repeatForever().delay(Double(index) * 0.3),

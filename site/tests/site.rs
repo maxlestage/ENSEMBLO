@@ -19,7 +19,7 @@ async fn the_home_page_is_complete() {
     assert!(html.contains(r#"<meta property="og:image""#));
     assert!(html.contains("application/ld+json"));
     // Les quatre îlots, rendus par le serveur.
-    for island in ["hero3d", "ballot3d", "swipe", "flap"] {
+    for island in ["hero", "ballot", "swipe", "flap"] {
         assert!(
             html.contains(&format!(r#"data-island="{island}""#)),
             "{island}"

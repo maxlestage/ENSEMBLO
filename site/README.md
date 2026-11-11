@@ -10,24 +10,26 @@ compilés en WebAssembly. Mobile first, aucun défilement horizontal de 320 px �
 | Partie | Où |
 |---|---|
 | Serveur, pages, plan du site, PWA | `src/server.rs` (natif) |
-| Scènes 3D avec physique (`paquets::ecs`, WebGL 2) | `src/scenes.rs` (serveur et navigateur) |
+| Animations 2D avec physique (disques, gravité, chocs) | `src/sim.rs` (serveur et navigateur), dessinées par `src/client/canvas.rs` |
 | Îlots : scène d'accueil, urnes, démo de swipe, code de session | `src/islands.rs` |
-| Animations du navigateur (apparitions, compteurs, inclinaison 3D) | `src/client/` (wasm32) |
+| Export statique pour GitHub Pages | `src/export.rs` |
+| Animations du navigateur (apparitions, compteurs, glissement à la souris) | `src/client/` (wasm32) |
 | Textes, idées, décompte et tirage au sort | `src/content.rs` |
 | Styles, icône, image Open Graph | `public/` |
 
-- **Accueil** : six cartes d'idées tournent en anneau autour d'un jeton de vote ; des jetons
-  « oui » et « non » tombent, rebondissent et s'empilent sur le plateau (masse, gravité,
-  collisions). Un appui en lâche un, glisser tourne la caméra.
-- **Démo** : une pile de cartes à glisser au doigt (3D, tampons OUI / NON), les votes de trois
+- **Accueil** : six cartes d'idées flottent au-dessus d'un plateau ; des jetons « oui » et
+  « non » tombent, rebondissent et s'empilent (gravité, chocs, frottement). Un appui en
+  lâche un de plus.
+- **Démo** : une pile de cartes à glisser au doigt (tampons OUI / NON), les votes de trois
   amis, le classement animé et, en cas d'égalité, une roulette qui tire le gagnant.
 - **Résultat** : une bille par « oui » tombe dans l'urne de son idée ; la plus remplie reçoit
   sa couronne.
-- **En CSS** : titre à mots défilants, bandeau, cartes en orbite, ticket au code en palettes
-  qui basculent, téléphones et iPhone en 3D, parallaxe pilotée par le défilement
-  (`animation-timeline: view()`), FAQ qui s'ouvre en douceur (`::details-content`).
-- Les scènes 3D ne tournent que lorsqu'elles sont à l'écran ; tout respecte
-  `prefers-reduced-motion`. Sans WebGL ou sans JavaScript, la page reste complète.
+- **En CSS** : titre à mots défilants, bandeau, cartes en orbite, ticket au code dont les
+  lettres tombent, téléphones et iPhone qui se balancent, parallaxe pilotée par le
+  défilement (`animation-timeline: view()`), FAQ qui s'ouvre en douceur (`::details-content`).
+- Tout est en 2D : pas de WebGL, un bundle WebAssembly d'environ 230 Ko. Les animations ne
+  tournent que lorsqu'elles sont à l'écran ; tout respecte `prefers-reduced-motion`. Sans
+  JavaScript, la page reste complète.
 
 ## Construire et lancer
 
@@ -49,6 +51,19 @@ cargo run --release
 Variables : `PORT`, `SITE_URL` (adresse publique des URL canoniques et Open Graph ; prise de
 la requête sinon).
 
+## GitHub Pages
+
+```bash
+BASE_PATH=/ENSEMBLO SITE_URL=https://maxlestage.github.io/ENSEMBLO \
+  cargo run --release -- export dist
+```
+
+Chaque page est rendue par l'app elle-même (`app.test()`), puis écrite dans
+`dist/<chemin>/index.html`, avec `404.html`, le manifeste et le service worker de la PWA,
+`sitemap.xml`, `robots.txt`, `public/` et `pkg/`. Chaque URL absolue passe derrière
+`BASE_PATH`. Construisez `pkg/` d'abord. Le workflow `.github/workflows/pages.yml` fait tout
+cela et publie le résultat.
+
 ## Vérifier
 
 ```bash
@@ -59,6 +74,6 @@ cargo test
 ```
 
 Les tests couvrent le décompte et le tirage, le rendu des îlots, chaque page à travers
-`app.test()` (statut, CSP, balises, sections), et la physique des deux scènes, avancées
-image par image sans navigateur : chaque jeton se pose sur le plateau, chaque bille tombe
-dans son urne et la couronne apparaît.
+`app.test()` (statut, CSP, balises, sections), les URL de l'export, et la physique des deux
+animations, avancées pas à pas sans navigateur : chaque jeton se pose sur le plateau sans
+chevaucher les autres, chaque bille tombe dans son urne et la couronne apparaît.

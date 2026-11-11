@@ -8,7 +8,7 @@ L'app native d'Ensemblo, en **Swift 6** et **SwiftUI** (Liquid Glass d'iOS 26), 
 - Rejoindre : taper le code, scanner le QR‑code (VisionKit), ou ouvrir un lien
   `ensemblo://s/CODE`.
 - Proposer des idées, qui apparaissent aussitôt chez tout le monde.
-- Voter en swipant les cartes (3D, tampons OUI / NON, retour haptique), ou avec les boutons
+- Voter en swipant les cartes (tampons OUI / NON, retour haptique), ou avec les boutons
   et VoiceOver.
 - Le résultat en direct ; en cas d'égalité, une roulette tire le gagnant avec la graine de
   la session : le même sur chaque téléphone, et le même calcul que sur le site.
