@@ -1,7 +1,7 @@
 //! Le bundle du navigateur : il réveille les îlots et lance les animations de la page.
 
+pub mod canvas;
 pub mod motion;
-pub mod scenes;
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;

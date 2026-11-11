@@ -127,7 +127,7 @@ struct RankRow: View {
     }
 }
 
-/// La carte du gagnant, qui tourne en 3D en apparaissant.
+/// La carte du gagnant, qui apparaît en grandissant et en tournant à plat.
 struct WinnerCard: View {
     let idea: Idea
     let drawn: Bool
@@ -147,7 +147,9 @@ struct WinnerCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 28)
         .background(Theme.card(for: idea.id), in: .rect(cornerRadius: 28))
-        .rotation3DEffect(.degrees(turned ? 0 : 90), axis: (x: 0, y: 1, z: 0))
+        .scaleEffect(turned ? 1 : 0.4)
+        .rotationEffect(.degrees(turned ? 0 : -12))
+        .opacity(turned ? 1 : 0)
         .shadow(color: Theme.gold.opacity(0.5), radius: 24, y: 10)
         .onAppear {
             withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) { turned = true }

@@ -12,7 +12,7 @@ on partage le QR‑code, chacun propose ses idées et vote en swipant. L'idée q
 
 | Dossier | Quoi | Avec |
 |---|---|---|
-| [`site/`](site/) | Le site de présentation : 3D, physique, animations, démo de vote jouable | Rust, [Paquets](https://github.com/maxlestage/Paquets) (pages rendues par le serveur, îlots WebAssembly, `paquets::ecs` en WebGL 2) |
+| [`site/`](site/) | Le site de présentation : animations 2D avec physique, démo de vote jouable | Rust, [Paquets](https://github.com/maxlestage/Paquets) (pages rendues par le serveur, îlots WebAssembly, canvas 2D) |
 | [`ios/`](ios/) | L'app iPhone | Swift 6, SwiftUI (Liquid Glass), Firebase Apple SDK 13 |
 | [`firebase/`](firebase/) | Les règles de sécurité de la base | Firebase Realtime Database |
 
@@ -57,8 +57,11 @@ calculé à l'identique en Rust (site) et en Swift (app), et vérifié par les t
 ## Intégration continue
 
 - `.github/workflows/ci.yml` : site (fmt, clippy serveur et wasm32, tests, bundle) et tests
-  Swift du cœur sous Linux ; quand tout est vert, la branche est fusionnée dans `master`
-  (sauf `wip/...`), puis déployée.
+  Swift du cœur sous Linux ; quand tout est vert, la branche est **fusionnée
+  automatiquement dans `master`** (sauf `wip/...`), puis publiée.
+- `.github/workflows/pages.yml` : le site exporté en fichiers statiques et publié sur
+  **GitHub Pages** (`https://maxlestage.github.io/ENSEMBLO/`), à chaque mise à jour de
+  `master`. À activer une fois : *Settings → Pages → Source : GitHub Actions*.
 - `.github/workflows/ios.yml` : l'app compilée avec Xcode 27 (runner `xcode-27`), quand
   `ios/` change.
 - `.github/workflows/heroku.yml` : déploiement du site sur Heroku (secrets
@@ -66,3 +69,10 @@ calculé à l'identique en Rust (site) et en Swift (app), et vérifié par les t
 
 Le secret `REPOS_TOKEN` (un jeton GitHub qui peut lire les dépôts de Paquets, privés) est
 nécessaire à la compilation du site.
+
+Pour la publication sur GitHub Pages en local :
+
+```bash
+cd site
+BASE_PATH=/ENSEMBLO SITE_URL=https://maxlestage.github.io/ENSEMBLO cargo run --release -- export dist
+```

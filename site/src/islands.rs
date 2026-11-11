@@ -8,39 +8,42 @@ use crate::icons::icon;
 
 /// Chaque îlot, sous le nom donné à [`island`].
 pub const ISLANDS: [(&str, paquets::active::IslandFn); 4] = [
-    ("hero3d", hero3d),
-    ("ballot3d", ballot3d),
+    ("hero", hero),
+    ("ballot", ballot),
     ("swipe", swipe),
     ("flap", flap),
 ];
 
-// ----- Les scènes 3D -------------------------------------------------------------------
+// ----- Les animations 2D -------------------------------------------------------------------
 
-/// La scène d'accueil : le serveur rend le canvas, le navigateur lance le jeu quand il
-/// est visible et l'arrête quand il sort de l'écran.
-pub fn hero3d(_props: &str) -> Node {
+/// La scène d'accueil : le serveur rend le canvas, le navigateur l'anime en 2D quand il
+/// est visible et s'arrête quand il sort de l'écran.
+pub fn hero(_props: &str) -> Node {
     canvas()
-        .class("scene3d scene3d--hero")
+        .class("scene scene--hero")
         .attr("role", "img")
         .attr(
             "aria-label",
-            "Six cartes d'idées tournent autour d'un jeton de vote, des jetons oui et non tombent sur un plateau",
+            "Six cartes d'idées flottent au-dessus d'un plateau, des jetons oui et non tombent et s'empilent",
         )
         .use_action(|canvas| start_scene(canvas, Scene::Hero))
         .into()
 }
 
-/// Le résultat en urnes, avec le compteur de billes tombées.
-pub fn ballot3d(_props: &str) -> Node {
-    use crate::scenes::ballot::{IDEA_OF, VOTES, winner};
+/// L'idée de chaque urne du dépouillement, dans [`IDEAS`].
+pub const BALLOT_IDEAS: [usize; 4] = [0, 1, 2, 3];
+
+/// Le dépouillement en urnes, avec le compteur de billes tombées.
+pub fn ballot(_props: &str) -> Node {
+    use crate::sim::{BallotScene, VOTES};
     let dropped = use_state(0usize);
     let total: usize = VOTES.iter().sum();
-    let best = winner();
+    let best = BallotScene::winner();
     div()
         .class("ballot")
         .child(
             canvas()
-                .class("scene3d scene3d--ballot")
+                .class("scene scene--ballot")
                 .attr("role", "img")
                 .attr(
                     "aria-label",
@@ -49,21 +52,21 @@ pub fn ballot3d(_props: &str) -> Node {
                 .use_action(move |canvas| start_scene(canvas, Scene::Ballot(dropped))),
         )
         .child(
-            ol().class("ballot__labels").children(
-                IDEA_OF.iter().enumerate().map(|(bin, &idea)| {
+            ol().class("ballot__labels")
+                .children(BALLOT_IDEAS.iter().enumerate().map(|(bin, &idea)| {
                     li().class_if("is-winner", move || best == bin && dropped.get() >= total)
                         .style(format!("--hue:{}", IDEAS[idea].hue))
                         .child(span().class("ballot__emoji").text(IDEAS[idea].emoji))
                         .child(strong().text(VOTES[bin].to_string()))
                         .child(small().text(IDEAS[idea].kind))
-                }),
-            ),
+                })),
         )
         .child(
             p().class("ballot__status")
                 .attr("aria-live", "polite")
                 .text_dyn(move || {
                     let n = dropped.get();
+                    let idea = IDEAS[BALLOT_IDEAS[best]];
                     if n == 0 {
                         format!("{total} votes, quatre idées.")
                     } else if n < total {
@@ -71,7 +74,7 @@ pub fn ballot3d(_props: &str) -> Node {
                     } else {
                         format!(
                             "{} {} l'emporte avec {} oui.",
-                            IDEAS[IDEA_OF[best]].emoji, IDEAS[IDEA_OF[best]].title, VOTES[best]
+                            idea.emoji, idea.title, VOTES[best]
                         )
                     }
                 }),
@@ -79,7 +82,7 @@ pub fn ballot3d(_props: &str) -> Node {
         .into()
 }
 
-/// Quelle scène lancer.
+/// Quelle scène animer.
 #[derive(Clone, Copy)]
 pub enum Scene {
     Hero,
@@ -88,7 +91,7 @@ pub enum Scene {
 
 #[cfg(target_arch = "wasm32")]
 fn start_scene(canvas: &paquets::active::Dom, scene: Scene) -> impl FnOnce() + use<> {
-    let running = crate::client::scenes::start_when_visible(canvas, scene);
+    let running = crate::client::canvas::start_when_visible(canvas, scene);
     move || drop(running)
 }
 
@@ -109,26 +112,23 @@ pub fn card_transform(offset: isize, vote: Option<bool>, dx: f64, dy: f64) -> St
         o if o < 0 => {
             let side = if vote == Some(true) { 1.0 } else { -1.0 };
             format!(
-                "translate3d({}%, -8%, 0) rotate({}deg) rotateY({}deg)",
+                "translate({}%, -8%) rotate({}deg)",
                 side * 160.0,
-                side * 28.0,
-                side * 30.0
+                side * 28.0
             )
         }
         // Celle du dessus suit le doigt.
         0 => format!(
-            "translate3d({dx:.1}px, {:.1}px, 60px) rotate({:.2}deg) rotateY({:.2}deg)",
+            "translate({dx:.1}px, {:.1}px) rotate({:.2}deg)",
             dy * 0.35,
-            dx * 0.06,
-            dx * 0.05
+            dx * 0.06
         ),
         // Les suivantes attendent, en retrait.
         o => {
             let o = o.min(3) as f64;
             format!(
-                "translate3d(0, {:.0}px, {:.0}px) scale({:.3}) rotateX(6deg)",
+                "translate(0, {:.0}px) scale({:.3})",
                 o * 14.0,
-                -o * 40.0,
                 1.0 - o * 0.05
             )
         }
@@ -471,7 +471,7 @@ fn capture(_e: &Event) {}
 pub const CODES: [&str; 4] = ["SOIREE", "K7Q2XM", "CINE42", "PIZZA9"];
 
 /// Un code de session à six lettres, en panneau à palettes : les lettres basculent
-/// en 3D à chaque nouvelle session.
+/// à chaque nouvelle session.
 pub fn flap(_props: &str) -> Node {
     let code = use_state(0usize);
     let tiles = div()
@@ -537,9 +537,9 @@ mod tests {
 
     #[test]
     fn cards_fly_to_the_side_of_their_vote() {
-        assert!(card_transform(-1, Some(true), 0.0, 0.0).starts_with("translate3d(160%"));
-        assert!(card_transform(-1, Some(false), 0.0, 0.0).starts_with("translate3d(-160%"));
-        assert!(card_transform(0, None, 42.0, 0.0).starts_with("translate3d(42.0px"));
+        assert!(card_transform(-1, Some(true), 0.0, 0.0).starts_with("translate(160%"));
+        assert!(card_transform(-1, Some(false), 0.0, 0.0).starts_with("translate(-160%"));
+        assert!(card_transform(0, None, 42.0, 0.0).starts_with("translate(42.0px"));
         assert!(card_transform(2, None, 0.0, 0.0).contains("scale(0.900)"));
     }
 }

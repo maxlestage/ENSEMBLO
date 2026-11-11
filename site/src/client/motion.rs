@@ -126,7 +126,7 @@ fn scroll_state(root: HtmlElement) {
     });
 }
 
-/// Les éléments `data-tilt` penchent vers la souris, en 3D.
+/// Les éléments `data-tilt` glissent légèrement vers la souris.
 fn tilt() {
     for el in all("[data-tilt]") {
         let target = el.clone();
@@ -135,14 +135,14 @@ fn tilt() {
             let x = (f64::from(e.client_x()) - rect.left()) / rect.width() - 0.5;
             let y = (f64::from(e.client_y()) - rect.top()) / rect.height() - 0.5;
             let style = target.style();
-            let _ = style.set_property("--ry", &format!("{:.2}deg", x * 14.0));
-            let _ = style.set_property("--rx", &format!("{:.2}deg", -y * 14.0));
+            let _ = style.set_property("--tx", &format!("{:.1}px", x * 10.0));
+            let _ = style.set_property("--ty", &format!("{:.1}px", y * 10.0));
         });
         let target = el.clone();
         on(&el, "pointerleave", true, move |_: MouseEvent| {
             let style = target.style();
-            let _ = style.set_property("--ry", "0deg");
-            let _ = style.set_property("--rx", "0deg");
+            let _ = style.set_property("--tx", "0px");
+            let _ = style.set_property("--ty", "0px");
         });
     }
 }
