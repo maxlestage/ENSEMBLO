@@ -103,5 +103,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run pages.yml --ref master --repo "$GITHUB_REPOSITORY"
-          gh workflow run heroku.yml --ref master --repo "$GITHUB_REPOSITORY"
+          # Un workflow qui vient d'arriver sur master met quelques secondes à être connu.
+          for workflow in pages.yml heroku.yml; do
+            for attempt in 1 2 3 4 5 6; do
+              gh workflow run "$workflow" --ref master --repo "$GITHUB_REPOSITORY" && break
+              [ "$attempt" = 6 ] && echo "::warning::$workflow n'a pas pu être lancé."
+              sleep 10
+            done
+          done
